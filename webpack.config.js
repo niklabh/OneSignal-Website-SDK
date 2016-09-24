@@ -146,7 +146,7 @@ const ONESIGNAL_WEB_SDK_TESTS = {
 const ONESIGNAL_WEB_SDK_TEST_SERVER = {
   name: 'OneSignalSDKTestServer',
   target: 'node',
-  entry: ['babel-polyfill', './test/server.js'],
+  entry: ['babel-polyfill', './test/server/entry.js'],
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'OneSignalSDKTestServer.js'

@@ -780,7 +780,7 @@ describe('Web SDK Tests', function() {
         });
     });
 
-    describe.only('Ensure HTTPS Image Resources', () => {
+    describe('Ensure HTTPS Image Resources', () => {
         it('should not translate HTTPS URLs', function() {
             expect(Utils.ensureImageResourceHttps('https://site.com/a.jpg')).to.equal('https://site.com/a.jpg');
         });
