@@ -19,6 +19,7 @@ var definePluginConstants = {
   __BETA__: IS_BETA,
   __TEST__: IS_TEST,
   __VERSION__: JSON.stringify(require("./package.json").sdkVersion),
+  NODE_CONFIG_DIR: 'test'
 };
 
 if (IS_PROD) {
