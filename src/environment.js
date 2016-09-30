@@ -17,6 +17,10 @@ export default class Environment {
     return "iFrame";
   }
 
+  static get UNSUPPORTED() {
+    return "unsupported";
+  }
+
   static getEnv() {
     if (typeof window === "undefined") {
       if (typeof WorkerLocation !== "undefined" && location instanceof WorkerLocation)
@@ -35,6 +39,7 @@ export default class Environment {
                location.pathname === '/webPushModal') {
         return Environment.IFRAME;
       }
+      else return Environment.UNSUPPORTED;
     }
   }
 
@@ -75,12 +80,8 @@ export default class Environment {
     return __DEV__;
   }
 
-  static isBeta() {
-    return __BETA__;
-  }
-
-  static isTest() {
-    return __TEST__;
+  static isUnsupported() {
+    return Environment.getEnv() === Environment.UNSUPPORTED;
   }
 
   static get TRADITIONAL_CHINESE_LANGUAGE_TAG() {
