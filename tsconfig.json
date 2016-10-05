@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "lib": ["es6", "es2015.promise", "dom", "scripthost"],
+    "module": "commonjs",
+    "target": "es6",
+    "sourceMap": true,
+    "allowJs": true,
+    "types": ["node"],
+    "pretty": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "allowUnreachableCode": true,
+    "outDir": "dist",
+    "awesomeTypescriptLoaderOptions": {
+      "useCache": false
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "files": [
+    "typings/index.d.ts",
+    "src/entry.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "examples",
+    "test",
+    "typings"
+  ]
+}

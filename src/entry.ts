@@ -1,7 +1,10 @@
+///<reference path="../typings/globals/loglevel/index.d.ts"/>
+///<reference path="../typings/globals/onesignal.d.ts"/>
+///<reference path="../typings/globals/serviceworker.d.ts"/>
+
 import Environment from './environment.js';
 import { getSdkLoadCount, incrementSdkLoadCount } from './utils';
-import log from 'loglevel';
-
+import 'loglevel';
 
 if (Environment.isBrowser()) {
   incrementSdkLoadCount();

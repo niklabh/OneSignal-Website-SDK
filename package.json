@@ -95,6 +95,10 @@
   },
   "homepage": "https://github.com/one-signal/OneSignal-Website-SDK",
   "devDependencies": {
-    "webpack": "^1.13.1"
+    "@types/node": "^6.0.42",
+    "awesome-typescript-loader": "^2.2.4",
+    "ts-loader": "^0.8.2",
+    "typescript": "^2.1.0-dev.20161005",
+    "webpack": "^1.13.2"
   }
 }
