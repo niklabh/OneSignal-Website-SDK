@@ -69,11 +69,27 @@ var config = {
             }
         ]
     },plugins: [
-        new webpack.ProvidePlugin({
-            'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
-        }),
         new webpack.optimize.DedupePlugin(),
         new webpack.optimize.OccurrenceOrderPlugin(),
+        new webpack.optimize.UglifyJsPlugin({
+            sourceMap: true,
+            compress: {
+                sequences: false,
+                dead_code: false,
+                conditionals: false,
+                booleans: false,
+                unused: false,
+                if_return: false,
+                join_vars: false,
+                drop_console: false,
+                drop_debugger: false,
+                warnings: false,
+            },
+            mangle: IS_PROD,
+            output: {
+                comments: false
+            }
+        }),
         new webpack.DefinePlugin(definePluginConstants),
         recompileFunction
     ]

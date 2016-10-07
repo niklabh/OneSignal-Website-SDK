@@ -2,17 +2,17 @@ import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js';
 import './string.js';
 import OneSignalApi from './oneSignalApi.js';
-import log from 'loglevel';
+import * as log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
 import Database from './database.js';
 import * as Browser from 'bowser';
 import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, normalizeSubdomain, decodeHtmlEntities, getUrlQueryParam, getDeviceTypeForBrowser } from './utils.js';
-import objectAssign from 'object-assign';
-import EventEmitter from 'wolfy87-eventemitter';
-import heir from 'heir';
+import * as objectAssign from 'object-assign';
+
+import * as EventEmitter from 'wolfy87-eventemitter';
+import * as heir from 'heir';
 import swivel from 'swivel';
-import OneSignal from './OneSignal';
 import Postmam from './postmam.js';
 import Cookie from 'js-cookie';
 

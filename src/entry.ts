@@ -4,7 +4,8 @@
 
 import Environment from './environment.js';
 import { getSdkLoadCount, incrementSdkLoadCount } from './utils';
-import 'loglevel';
+import * as log from 'loglevel';
+import * as OneSignal from './OneSignal.js';
 
 if (Environment.isBrowser()) {
   incrementSdkLoadCount();
@@ -19,7 +20,7 @@ if (Environment.isBrowser()) {
     if (typeof OneSignal !== "undefined")
       var predefinedOneSignalPushes = OneSignal;
 
-    require("expose?OneSignal!./OneSignal.js");
+    window['OneSignal'] = OneSignal;
 
     if (predefinedOneSignalPushes)
       OneSignal._processPushes(predefinedOneSignalPushes);

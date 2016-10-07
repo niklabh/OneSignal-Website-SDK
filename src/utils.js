@@ -1,4 +1,4 @@
-import log from 'loglevel';
+import * as log from 'loglevel';
 import * as Browser from 'bowser';
 import Environment from './environment.js';
 import IndexedDb from './indexedDb';

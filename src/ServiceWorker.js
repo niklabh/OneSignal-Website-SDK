@@ -1,10 +1,10 @@
 import { DEV_HOST, DEV_FRAME_HOST, PROD_HOST, API_URL } from './vars.js';
 import Environment from './environment.js'
 import OneSignalApi from './oneSignalApi.js';
-import log from 'loglevel';
+import * as log from 'loglevel';
 import Database from './database.js';
 import { isPushNotificationsSupported, getConsoleStyle, contains, trimUndefined, getDeviceTypeForBrowser, substringAfter, isValidUuid } from './utils.js';
-import objectAssign from 'object-assign';
+import * as objectAssign from 'object-assign';
 import swivel from 'swivel';
 import * as Browser from 'bowser';
 
@@ -69,7 +69,7 @@ class ServiceWorker {
   /**
    * Service worker entry point.
    */
-  static run() {
+  static async run() {
     self.addEventListener('push', ServiceWorker.onPushReceived);
     self.addEventListener('notificationclose', ServiceWorker.onNotificationClosed);
     self.addEventListener('notificationclick', ServiceWorker.onNotificationClicked);
@@ -82,22 +82,22 @@ class ServiceWorker {
     // 3/2/16: Firefox does not send the Origin header when making CORS request through service workers, which breaks some sites that depend on the Origin header being present (https://bugzilla.mozilla.org/show_bug.cgi?id=1248463)
     // Fix: If the browser is Firefox and is v44, use the following workaround:
     if (Browser.firefox && Browser.version && contains(Browser.version, '44')) {
-      Database.get('Options', 'serviceWorkerRefetchRequests')
-        .then(refetchRequests => {
-          if (refetchRequests == true) {
-            log.info('Detected Firefox v44; installing fetch handler to refetch all requests.');
-            self.REFETCH_REQUESTS = true;
-            self.addEventListener('fetch', ServiceWorker.onFetch);
-          } else {
-            self.SKIP_REFETCH_REQUESTS = true;
-            log.info('Detected Firefox v44 but not refetching requests because option is set to false.');
-          }
-        })
-        .catch(e => {
-          log.error(e);
+      let refetchRequests = await Database.get('Options', 'serviceWorkerRefetchRequests');
+      try {
+        if (refetchRequests == true) {
+          log.info('Detected Firefox v44; installing fetch handler to refetch all requests.');
           self.REFETCH_REQUESTS = true;
           self.addEventListener('fetch', ServiceWorker.onFetch);
-        });
+        } else {
+          self.SKIP_REFETCH_REQUESTS = true;
+          log.info('Detected Firefox v44 but not refetching requests because option is set to false.');
+        }
+      }
+      catch (e) {
+        log.error(e);
+        self.REFETCH_REQUESTS = true;
+        self.addEventListener('fetch', ServiceWorker.onFetch);
+      }
     }
   }
 
@@ -106,7 +106,7 @@ class ServiceWorker {
    * @param context Used to reply to the host page.
    * @param data The message contents.
    */
-  static onMessageReceived(context, data) {
+  static async onMessageReceived(context, data) {
     log.debug(`%c${Environment.getEnv().capitalize()} ⬸ Host:`, getConsoleStyle('serviceworkermessage'), data, context);
 
     if (!data) {
@@ -116,11 +116,10 @@ class ServiceWorker {
 
     if (data === 'notification.closeall') {
       // Used for testing; the host page can close active notifications
-      self.registration.getNotifications().then(notifications => {
-        for (let notification of notifications) {
-          notification.close();
-        }
-      });
+      let notifications = await self.registration.getNotifications();
+      for (let notification of notifications) {
+        notification.close();
+      }
     } else if (data.query) {
       ServiceWorker.processQuery(data.query, data.response);
     }
@@ -168,49 +167,43 @@ class ServiceWorker {
    * This method handles the receipt of a push signal on all web browsers except Safari, which uses the OS to handle
    * notifications.
    */
-  static onPushReceived(event) {
+  static async onPushReceived(event) {
     log.debug(`Called %conPushReceived(${JSON.stringify(event, null, 4)}):`, getConsoleStyle('code'), event);
+    try {
+      let notifications = ServiceWorker.parseOrFetchNotifications(event);
+      if (!notifications || notifications.length == 0) {
+        log.debug("Because no notifications were retrieved, we'll display the last known notification, so" +
+            " long as it isn't the welcome notification.");
+        return await ServiceWorker.displayBackupNotification();
+      }
 
-    event.waitUntil(
-        ServiceWorker.parseOrFetchNotifications(event)
-            .then(notifications => {
-              if (!notifications || notifications.length == 0) {
-                log.debug("Because no notifications were retrieved, we'll display the last known notification, so" +
-                          " long as it isn't the welcome notification.");
-                return ServiceWorker.displayBackupNotification();
-              }
+      //Display push notifications in the order we received them
+      for (let rawNotification of notifications) {
+        log.debug('Raw Notification from OneSignal:', rawNotification);
+        let notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
 
-              //Display push notifications in the order we received them
-              let notificationEventPromiseFns = [];
+        // Never nest the following line in a callback from the point of entering from retrieveNotifications
+        await ServiceWorker.displayNotification(notification);
+        await ServiceWorker.updateBackupNotification(notification);
+        await swivel.broadcast('notification.displayed', notification);
+        await ServiceWorker.executeWebhooks('notification.displayed', notification);
+      }
 
-              for (let rawNotification of notifications) {
-                log.debug('Raw Notification from OneSignal:', rawNotification);
-                let notification = ServiceWorker.buildStructuredNotificationObject(rawNotification);
+      return [].reduce((p, fn) => {
+        return p = p.then(fn);
+      }, Promise.resolve());
+    }
+    catch (e) {
+      log.debug('Failed to display a notification:', e);
+      if (self.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
+        log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
+      } else {
+        log.debug(
+            "Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
+        return await ServiceWorker.displayBackupNotification();
+      }
+    }
 
-                // Never nest the following line in a callback from the point of entering from retrieveNotifications
-                notificationEventPromiseFns.push((notif => {
-                  return ServiceWorker.displayNotification(notif)
-                      .then(() => ServiceWorker.updateBackupNotification(notif))
-                      .then(() => swivel.broadcast('notification.displayed', notif))
-                      .then(() => ServiceWorker.executeWebhooks('notification.displayed', notif))
-                }).bind(null, notification));
-              }
-
-              return notificationEventPromiseFns.reduce((p, fn) => {
-                return p = p.then(fn);
-               }, Promise.resolve());
-            })
-            .catch(e => {
-              log.debug('Failed to display a notification:', e);
-              if (self.UNSUBSCRIBED_FROM_NOTIFICATIONS) {
-                log.debug('Because we have just unsubscribed from notifications, we will not show anything.');
-              } else {
-                log.debug(
-                    "Because a notification failed to display, we'll display the last known notification, so long as it isn't the welcome notification.");
-                return ServiceWorker.displayBackupNotification();
-              }
-            })
-    )
   }
 
   /**
@@ -220,54 +213,51 @@ class ServiceWorker {
    * @param notification A JSON object containing notification details the user consumes.
    * @returns {Promise}
    */
-  static executeWebhooks(event, notification) {
+  static async executeWebhooks(event, notification) {
     var isServerCorsEnabled = false;
     var userId = null;
-    return Database.get('Ids', 'userId')
-      .then(theUserId => {
-        userId = theUserId;
-      })
-      .then(() => Database.get('Options', 'webhooks.cors'))
-      .then(cors => {
-        isServerCorsEnabled = cors;
-      })
-      .then(() => Database.get('Options', `webhooks.${event}`))
-      .then(webhookUrlQuery => {
-        if (webhookUrlQuery) {
-          let url = webhookUrlQuery;
-          // JSON.stringify() does not include undefined values
-          // Our response will not contain those fields here which have undefined values
-          let postData = {
-            event: event,
-            id: notification.id,
-            userId: userId,
-            action: notification.action,
-            buttons: notification.buttons,
-            heading: notification.heading,
-            content: notification.content,
-            url: notification.url,
-            icon: notification.icon,
-            data: notification.data
+    const theUserId = await Database.get('Ids', 'userId');
+    const cors = await Database.get('Options', 'webhooks.cors');
+
+    isServerCorsEnabled = cors;
+    const webhookUrlQuery = await Database.get('Options', `webhooks.${event}`);
+    try {
+      if (webhookUrlQuery) {
+        let url = webhookUrlQuery;
+        // JSON.stringify() does not include undefined values
+        // Our response will not contain those fields here which have undefined values
+        let postData = {
+          event: event,
+          id: notification.id,
+          userId: userId,
+          action: notification.action,
+          buttons: notification.buttons,
+          heading: notification.heading,
+          content: notification.content,
+          url: notification.url,
+          icon: notification.icon,
+          data: notification.data
+        };
+        let fetchOptions = {
+          method: 'post',
+          mode: 'no-cors',
+          body: JSON.stringify(postData)
+        };
+        if (isServerCorsEnabled) {
+          fetchOptions.mode = 'cors';
+          fetchOptions.headers = {
+            'X-OneSignal-Event': event,
+            'Content-Type': 'application/json'
           };
-          let fetchOptions = {
-            method: 'post',
-            mode: 'no-cors',
-            body: JSON.stringify(postData)
-          };
-          if (isServerCorsEnabled) {
-            fetchOptions.mode = 'cors';
-            fetchOptions.headers = {
-              'X-OneSignal-Event': event,
-              'Content-Type': 'application/json'
-            };
-          }
-          log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${url}`, getConsoleStyle('code'), ':', postData);
-          return fetch(url, fetchOptions);
         }
-      })
-      .catch(e => {
-        log.error('Error executing webhook:', e);
-      });
+        log.debug(`Executing ${event} webhook ${isServerCorsEnabled ? 'with' : 'without'} CORS %cPOST ${url}`, getConsoleStyle('code'), ':', postData);
+        return fetch(url, fetchOptions);
+      }
+
+    }
+    catch (e) {
+      log.error('Error executing webhook:', e);
+    }
   }
 
   /**
@@ -278,27 +268,27 @@ class ServiceWorker {
    * and not both. This doesn't really matter though.
    * @returns {Promise}
    */
-  static getActiveClients() {
-    return self.clients.matchAll({type: 'window', includeUncontrolled: true})
-        .then(windowClients => {
-          let activeClients = [];
+  static async getActiveClients() {
+    const windowClients = await self.clients.matchAll({type: 'window', includeUncontrolled: true});
 
-          for (let client of windowClients) {
-            // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
-            if (client.frameType && client.frameType === 'nested') {
-              // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
-              if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
-                   !Environment.isDev() && !contains(client.url, '.onesignal.com')) {
-                  continue;
-              }
-              // Indicates this window client is an HTTP subdomain iFrame
-              client.isSubdomainIframe = true;
-            }
-            activeClients.push(client);
-          }
+    let activeClients = [];
 
-          return activeClients;
-        });
+    for (let client of windowClients) {
+      // Test if this window client is the HTTP subdomain iFrame pointing to subdomain.onesignal.com
+      if (client.frameType && client.frameType === 'nested') {
+        // Subdomain iFrames point to 'https://subdomain.onesignal.com...'
+        if ((Environment.isDev() && !contains(client.url, DEV_FRAME_HOST)) ||
+            !Environment.isDev() && !contains(client.url, '.onesignal.com')) {
+          continue;
+        }
+        // Indicates this window client is an HTTP subdomain iFrame
+        client.isSubdomainIframe = true;
+      }
+      activeClients.push(client);
+    }
+
+    return activeClients;
+
   }
 
   /**
@@ -385,69 +375,61 @@ class ServiceWorker {
    * Any event needing to display a notification calls this so that all the display options can be centralized here.
    * @param notification A structured notification object.
    */
-  static displayNotification(notification, overrides) {
+  static async displayNotification(notification, overrides) {
     log.debug(`Called %cdisplayNotification(${JSON.stringify(notification, null, 4)}):`, getConsoleStyle('code'), notification);
-    return Promise.all([
-          // Use the default title if one isn't provided
-          ServiceWorker._getTitle(),
-          // Use the default icon if one isn't provided
-          Database.get('Options', 'defaultIcon'),
-          // Get option of whether we should leave notification displaying indefinitely
-          Database.get('Options', 'persistNotification'),
-          // Get app ID for tag value
-          Database.get('Ids', 'appId')
-        ])
-        .then(([defaultTitle, defaultIcon, persistNotification, appId]) => {
-          notification.heading = notification.heading ? notification.heading : defaultTitle;
-          notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
-          var extra = {};
-          extra.tag = `${appId}`;
-          extra.persistNotification = persistNotification;
+    let defaultTitle = await ServiceWorker._getTitle();
+    let defaultIcon = await Database.get('Options', 'defaultIcon');
+    let persistNotification = await Database.get('Options', 'persistNotification');
+    let appId = await Database.get('Ids', 'appId');
+    notification.heading = notification.heading ? notification.heading : defaultTitle;
+    notification.icon = notification.icon ? notification.icon : (defaultIcon ? defaultIcon : undefined);
+    var extra = {};
+    extra.tag = `${appId}`;
+    extra.persistNotification = persistNotification;
 
-          // Allow overriding some values
-          if (!overrides)
-            overrides = {};
-          notification = objectAssign(notification, overrides);
+    // Allow overriding some values
+    if (!overrides)
+      overrides = {};
+    notification = objectAssign(notification, overrides);
 
-          ServiceWorker.ensureNotificationResourcesHttps(notification);
+    ServiceWorker.ensureNotificationResourcesHttps(notification);
 
-          let notificationOptions = {
-            body: notification.content,
-            icon: notification.icon,
-            /*
-             On Chrome 44+, use this property to store extra information which you can read back when the
-             notification gets invoked from a notification click or dismissed event. We serialize the
-             notification in the 'data' field and read it back in other events. See:
-             https://developers.google.com/web/updates/2015/05/notifying-you-of-changes-to-notifications?hl=en
-             */
-            data: notification,
-            /*
-             On Chrome 48+, action buttons show below the message body of the notification. Clicking either
-             button takes the user to a link. See:
-             https://developers.google.com/web/updates/2016/01/notification-actions
-             */
-            actions: notification.buttons,
-            /*
-             Tags are any string value that groups notifications together. Two or notifications sharing a tag
-             replace each other.
-             */
-            tag: extra.tag,
-            /*
-             On Chrome 47+ (desktop), notifications will be dismissed after 20 seconds unless requireInteraction
-             is set to true. See:
-             https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
-             */
-            requireInteraction: extra.persistNotification,
-            /*
-             On Chrome 50+, by default notifications replacing identically-tagged notifications no longer
-             vibrate/signal the user that a new notification has come in. This flag allows subsequent
-             notifications to re-alert the user. See:
-             https://developers.google.com/web/updates/2016/03/notifications
-             */
-            renotify: true
-          };
-          return self.registration.showNotification(notification.heading, notificationOptions)
-        });
+    let notificationOptions = {
+      body: notification.content,
+      icon: notification.icon,
+      /*
+       On Chrome 44+, use this property to store extra information which you can read back when the
+       notification gets invoked from a notification click or dismissed event. We serialize the
+       notification in the 'data' field and read it back in other events. See:
+       https://developers.google.com/web/updates/2015/05/notifying-you-of-changes-to-notifications?hl=en
+       */
+      data: notification,
+      /*
+       On Chrome 48+, action buttons show below the message body of the notification. Clicking either
+       button takes the user to a link. See:
+       https://developers.google.com/web/updates/2016/01/notification-actions
+       */
+      actions: notification.buttons,
+      /*
+       Tags are any string value that groups notifications together. Two or notifications sharing a tag
+       replace each other.
+       */
+      tag: extra.tag,
+      /*
+       On Chrome 47+ (desktop), notifications will be dismissed after 20 seconds unless requireInteraction
+       is set to true. See:
+       https://developers.google.com/web/updates/2015/10/notification-requireInteractiom
+       */
+      requireInteraction: extra.persistNotification,
+      /*
+       On Chrome 50+, by default notifications replacing identically-tagged notifications no longer
+       vibrate/signal the user that a new notification has come in. This flag allows subsequent
+       notifications to re-alert the user. See:
+       https://developers.google.com/web/updates/2016/03/notifications
+       */
+      renotify: true
+    };
+    return self.registration.showNotification(notification.heading, notificationOptions)
   }
 
   /**

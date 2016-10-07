@@ -1,6 +1,6 @@
 import chai, { expect } from 'chai';
 import StackTrace from 'stacktrace-js';
-import log from 'loglevel';
+import * as log from 'loglevel';
 import { USER_AUTH_KEY} from './vars.js';
 import SoloTest from './soloTest';
 import PMPlus from './PMPlus';

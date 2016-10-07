@@ -1,10 +1,11 @@
 import { guid, contains } from './utils.js';
-import EventEmitter from 'wolfy87-eventemitter';
-import heir from 'heir';
+
+import * as EventEmitter from 'wolfy87-eventemitter';
+import * as heir from 'heir';
 import Environment from './environment.js';
 import { DEV_FRAME_HOST } from './vars.js';
-import objectAssign from 'object-assign';
-import log from 'loglevel';
+import * as objectAssign from 'object-assign';
+import * as log from 'loglevel';
 
 
 /**

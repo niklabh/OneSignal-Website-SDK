@@ -1,6 +1,7 @@
-import log from 'loglevel';
-import EventEmitter from 'wolfy87-eventemitter';
-import heir from 'heir';
+import * as log from 'loglevel';
+
+import * as EventEmitter from 'wolfy87-eventemitter';
+import * as heir from 'heir';
 import Event from './events.js';
 import { getConsoleStyle } from './utils.js';
 import Database from './database.js';
@@ -12,7 +13,7 @@ export default class IndexedDb {
    * Returns an existing instance or creates a new instances of the database.
    * @returns {Promise} Returns a promise that is fulfilled when the database becomes accessible or rejects when an error occurs.
    */
-  static getInstance() {
+  static async getInstance() {
     return new Promise(function (resolve, reject) {
       if (IndexedDb._instance) {
         resolve(IndexedDb._instance);

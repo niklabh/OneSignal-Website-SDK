@@ -1,4 +1,4 @@
-import log from 'loglevel';
+import * as log from 'loglevel';
 import Environment from './environment.js';
 import { getConsoleStyle, contains } from './utils.js';
 import './string.js';

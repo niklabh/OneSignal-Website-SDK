@@ -3,7 +3,7 @@ import Environment from './environment.js';
 import './string.js';
 import OneSignalApi from './oneSignalApi.js';
 import IndexedDb from './indexedDb';
-import log from 'loglevel';
+import * as log from 'loglevel';
 import LimitStore from './limitStore.js';
 import Event from "./events.js";
 import Bell from "./bell/bell.js";
@@ -11,9 +11,10 @@ import Cookie from 'js-cookie';
 import Database from './database.js';
 import * as Browser from 'bowser';
 import { isPushNotificationsSupported, isPushNotificationsSupportedAndWarn, getConsoleStyle, once, guid, contains, unsubscribeFromPush, decodeHtmlEntities, getUrlQueryParam, executeAndTimeoutPromiseAfter, wipeLocalIndexedDb } from './utils.js';
-import objectAssign from 'object-assign';
-import EventEmitter from 'wolfy87-eventemitter';
-import heir from 'heir';
+import * as objectAssign from 'object-assign';
+
+import * as EventEmitter from 'wolfy87-eventemitter';
+import * as heir from 'heir';
 import swivel from 'swivel';
 import Postmam from './postmam.js';
 import OneSignalHelpers from './helpers.js';
@@ -268,6 +269,21 @@ export default class OneSignal {
     }
   }
 
+    static async main() {
+        await OneSignal.ping();
+    }
+
+    static async ping() {
+        for (var i = 0; i < 10; i++) {
+            await OneSignal.delay(1000);
+            console.log("Calling ping from OneSignal.js, compiled with TypeScript", i);
+        }
+    }
+
+    static delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
   static init(options) {
     log.debug(`Called %cinit(${JSON.stringify(options, null, 4)})`, getConsoleStyle('code'));
 
@@ -380,41 +396,425 @@ export default class OneSignal {
     }
   }
 
-  static _saveInitOptions() {
-    let opPromises = [];
+  static async _saveInitOptions() {
     if (OneSignal.config.persistNotification === false) {
-      opPromises.push(Database.put('Options', {key: 'persistNotification', value: false}));
+        await Database.put('Options', {key: 'persistNotification', value: false});
     } else {
-      opPromises.push(Database.put('Options', {key: 'persistNotification', value: true}));
+        await Database.put('Options', {key: 'persistNotification', value: true});
     }
 
     let webhookOptions = OneSignal.config.webhooks;
-    ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(event => {
-      if (webhookOptions && webhookOptions[event]) {
-        opPromises.push(Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]}));
-      } else {
-        opPromises.push(Database.put('Options', {key: `webhooks.${event}`, value: false}));
-      }
+    ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+        if (webhookOptions && webhookOptions[event]) {
+            await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+        } else {
+            await Database.put('Options', {key: `webhooks.${event}`, value: false});
+        }
     });
+
     if (webhookOptions && webhookOptions.cors) {
-      opPromises.push(Database.put('Options', {key: `webhooks.cors`, value: true}));
+      await Database.put('Options', {key: `webhooks.cors`, value: true});
     } else {
-      opPromises.push(Database.put('Options', {key: `webhooks.cors`, value: false}));
+      await Database.put('Options', {key: `webhooks.cors`, value: false});
     }
 
     if (OneSignal.config.notificationClickHandlerMatch) {
-      opPromises.push(Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch}));
+      await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
     } else {
-      opPromises.push(Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'}));
+      await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
     }
 
     if (OneSignal.config.serviceWorkerRefetchRequests === false) {
-      opPromises.push(Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false}));
+      await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
     } else {
-      opPromises.push(Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true}));
+      await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
     }
-    return Promise.all(opPromises);
   }
+
+    static async uu5() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async yy5() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async tt5() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async tt4() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async m6() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async n5() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async b4() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async v3() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async m7() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async n6() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
+
+    static async b5() {
+        if (OneSignal.config.persistNotification === false) {
+            await Database.put('Options', {key: 'persistNotification', value: false});
+        } else {
+            await Database.put('Options', {key: 'persistNotification', value: true});
+        }
+
+        let webhookOptions = OneSignal.config.webhooks;
+        ['notification.displayed', 'notification.clicked', 'notification.dismissed'].forEach(async event => {
+            if (webhookOptions && webhookOptions[event]) {
+                await Database.put('Options', {key: `webhooks.${event}`, value: webhookOptions[event]});
+            } else {
+                await Database.put('Options', {key: `webhooks.${event}`, value: false});
+            }
+        });
+
+        if (webhookOptions && webhookOptions.cors) {
+            await Database.put('Options', {key: `webhooks.cors`, value: true});
+        } else {
+            await Database.put('Options', {key: `webhooks.cors`, value: false});
+        }
+
+        if (OneSignal.config.notificationClickHandlerMatch) {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: OneSignal.config.notificationClickHandlerMatch});
+        } else {
+            await Database.put('Options', {key: 'notificationClickHandlerMatch', value: 'exact'});
+        }
+
+        if (OneSignal.config.serviceWorkerRefetchRequests === false) {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: false});
+        } else {
+            await Database.put('Options', {key: 'serviceWorkerRefetchRequests', value: true});
+        }
+    }
 
   static closeNotifications() {
     if (navigator.serviceWorker && !OneSignal.isUsingSubscriptionWorkaround()) {

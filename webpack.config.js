@@ -38,7 +38,7 @@ var entries = { };
 if (IS_BETA)
   entries['OneSignalSDKBeta'] = './src/entry.js';
 else
-  entries['OneSignalSDK'] = './dist/typescript-bundle.js';
+  entries['OneSignalSDK'] = './src/entry.js';
 
 const ONESIGNAL_WEB_SDK = {
   name: 'OneSignalSDK',
@@ -52,8 +52,9 @@ const ONESIGNAL_WEB_SDK = {
   module: {
     loaders: [{
       test: /\.js$/,
+      include: [path.resolve(__dirname, "./src")],
       exclude: /(node_modules|bower_components|test\/server)/,
-      loader: 'babel',
+      loader: 'babel-loader',
       query: {
         presets: ['es2015'],
         cacheDirectory: true
