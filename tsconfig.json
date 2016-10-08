@@ -1,0 +1,39 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es5",
+      "es2015.promise",
+      "es2015.collection",
+      "dom",
+      "scripthost"
+    ],
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": true,
+    "allowJs": true,
+    "types": ["node"],
+    "pretty": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": false,
+    "skipDefaultLibCheck": false,
+    "outDir": "dist",
+    "awesomeTypescriptLoaderOptions": {
+      "useCache": false
+    }
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*"
+  ],
+  "files": [
+    "typings/index.d.ts",
+    "src/entry.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "examples",
+    "typings"
+  ]
+}

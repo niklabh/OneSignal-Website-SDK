@@ -6,6 +6,9 @@ var ExtractTextPlugin = require("extract-text-webpack-plugin");
 var IS_PROD = process.argv.indexOf('--production') >= 0;
 var IS_TEST = process.argv.indexOf('--test') >= 0;
 
+/**
+ * Utility Functions
+ */
 Date.prototype.timeNow = function() {
   var hours = this.getHours();
   var ampm = (hours >= 12 ? 'PM' : 'AM');
@@ -14,6 +17,9 @@ Date.prototype.timeNow = function() {
   return ((hours < 10) ? "0" : "") + hours + ":" + ((this.getMinutes() < 10) ? "0" : "") + this.getMinutes() + ":" + ((this.getSeconds() < 10) ? "0" : "") + this.getSeconds() + " " + ampm;
 };
 
+/**
+ * Variables
+ */
 var definePluginConstants = {
   __DEV__: !IS_PROD,
   __TEST__: IS_TEST,
@@ -33,29 +39,24 @@ var recompileFunction = function() {
   })
 };
 
-var entries = {
-  OneSignalSDK: './src/entry.js'
-};
-
 const ONESIGNAL_WEB_SDK = {
   name: 'OneSignalSDK',
   target: 'web',
-  entry: entries,
+  entry: './src/entry.ts',
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: '[name].js'
+    filename: 'OneSignalSDK.js'
   },
   devtool: 'source-map',
+  resolve: {
+    extensions: ["", ".ts", ".tsx", ".js"]
+  },
   module: {
     loaders: [{
-      test: /\.js$/,
+      test: /\.(t|j)sx?$/,
       include: [path.resolve(__dirname, "./src")],
-      exclude: /(node_modules|bower_components|test\/server)/,
-      loader: 'babel-loader',
-      query: {
-        presets: ['es2015'],
-        cacheDirectory: true
-      }
+      exclude: /(node_modules|bower_components|test)/,
+      loader: 'awesome-typescript-loader'
     },
       {
         test: /\.scss$/,
@@ -98,41 +99,32 @@ const ONESIGNAL_WEB_SDK = {
 
 const ONESIGNAL_WEB_SDK_TESTS = {
   name: 'OneSignalSDKTests',
-  target: 'web',
-  entry: ['babel-polyfill', './test/entry.js'],
+  target: 'node',
+  entry: ['./test/entry.ts'],
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'OneSignalSDKTests.js'
   },
   devtool: 'source-map',
+  resolve: {
+    extensions: ["", ".ts", ".tsx", ".js"]
+  },
   module: {
     loaders: [{
-      test: /\.js$/,
+      test: /\.(t|j)sx?$/,
+      loader: 'awesome-typescript-loader',
       include: [
-        path.resolve(__dirname, "./src"),
-        path.resolve(__dirname, "./test")
+          path.resolve(__dirname, "./src"),
+          path.resolve(__dirname, "./test"),
       ],
-      exclude: /(node_modules|bower_components|test\/server)/,
-      loader: 'babel-loader',
-      query: {
-        presets: ['es2015', 'stage-0'],
-        plugins: ['transform-runtime'],
-        cacheDirectory: true
-      }
-    },
-      {
-        test: /\.scss$/,
-        loaders: IS_PROD ? ["style", "css", "autoprefixer-loader", "sass"] : ["style", "css", "autoprefixer-loader", "sass"]
-      }]
+      exclude: /(node_modules|bower_components|test\/server)/
+    }, {
+      test: /(\.html$)|(LICENSE)/,
+      loader: 'ignore-loader'
+    }]
   },
-  sassLoader: {
-    includePaths: [path.resolve(__dirname, "./src")]
-  },
-  debug: !IS_PROD,
+  debug: true,
   plugins: [
-    new webpack.ProvidePlugin({
-      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
-    }),
     new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.optimize.DedupePlugin(),
     new webpack.DefinePlugin(definePluginConstants),
@@ -140,44 +132,44 @@ const ONESIGNAL_WEB_SDK_TESTS = {
   ]
 };
 
-const ONESIGNAL_WEB_SDK_TEST_SERVER = {
-  name: 'OneSignalSDKTestServer',
-  target: 'node',
-  entry: ['babel-polyfill', './test/server.js'],
-  output: {
-    path: path.join(__dirname, 'dist'),
-    filename: 'OneSignalSDKTestServer.js'
-  },
-  devtool: 'source-map',
-  module: {
-    loaders: [{
-      test: /\.js$/,
-      include: [path.resolve(__dirname, "./test/server")],
-      exclude: /(node_modules|bower_components)/,
-      loader: 'babel-loader',
-      query: {
-        presets: ['es2015', 'stage-0'],
-        plugins: ['transform-runtime'],
-        cacheDirectory: true
-      }
-    },
-      {
-        test: /\.json$/,
-        loader: "json-loader"
-      }]
-  },
-  debug: !IS_PROD,
-  plugins: [
-    new webpack.optimize.DedupePlugin(),
-    new webpack.DefinePlugin(definePluginConstants),
-    recompileFunction
-  ]
-};
+// const ONESIGNAL_WEB_SDK_TEST_SERVER = {
+//   name: 'OneSignalSDKTestServer',
+//   target: 'node',
+//   entry: ['babel-polyfill', './test/server.js'],
+//   output: {
+//     path: path.join(__dirname, 'dist'),
+//     filename: 'OneSignalSDKTestServer.js'
+//   },
+//   devtool: 'source-map',
+//   module: {
+//     loaders: [{
+//       test: /\.js$/,
+//       include: [path.resolve(__dirname, "./test/server")],
+//       exclude: /(node_modules|bower_components)/,
+//       loader: 'babel-loader',
+//       query: {
+//         presets: ['es2015', 'stage-0'],
+//         plugins: ['transform-runtime'],
+//         cacheDirectory: true
+//       }
+//     },
+//       {
+//         test: /\.json$/,
+//         loader: "json-loader"
+//       }]
+//   },
+//   debug: !IS_PROD,
+//   plugins: [
+//     new webpack.optimize.DedupePlugin(),
+//     new webpack.DefinePlugin(definePluginConstants),
+//     recompileFunction
+//   ]
+// };
 
 var exports = [ONESIGNAL_WEB_SDK];
 
 if (IS_TEST) {
-  exports.push(ONESIGNAL_WEB_SDK_TESTS, ONESIGNAL_WEB_SDK_TEST_SERVER);
+  exports.push(ONESIGNAL_WEB_SDK_TESTS);
 }
 
 module.exports = exports;
