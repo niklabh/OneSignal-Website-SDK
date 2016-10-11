@@ -507,66 +507,83 @@ export default class OneSignal {
    * Shows a sliding modal prompt on the page for users to trigger the HTTP popup window to subscribe.
    */
   static showHttpPrompt() {
-    /*
-     Only show the HTTP popover if:
-     - Notifications aren't already enabled
-     - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
-     */
-    if (OneSignal.__isPopoverShowing) {
-      log.debug('OneSignal: Not showing popover because it is currently being shown.');
-      return 'popover-already-shown';
+    if (!isPushNotificationsSupportedAndWarn()) {
+      return;
     }
-    return Promise.all([
-                         OneSignal.getNotificationPermission(),
-                         OneSignal.isPushNotificationsEnabled(),
-                         OneSignal.getSubscription(),
-                         Database.get('Options', 'popoverDoNotPrompt')
-                       ])
-                  .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
-                    if (doNotPrompt === true) {
-                      log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
-                      return 'popover-previously-dismissed';
-                    }
-                    if (permission === 'denied') {
-                      log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
-                      return 'notification-permission-blocked';
-                    }
-                    if (isEnabled) {
-                      log.debug('OneSignal: Not showing popover because the current user is already subscribed.');
-                      return 'user-already-subscribed';
-                    }
-                    if (!notOptedOut) {
-                      log.debug('OneSignal: Not showing popover because the user was manually opted out.');
-                      return 'user-intentionally-unsubscribed';
-                    }
-                    OneSignalHelpers.markHttpPopoverShown();
-                    OneSignal.popover = new Popover(OneSignal.config.promptOptions);
-                    OneSignal.popover.create();
-                    log.debug('Showing the HTTP popover.');
-                    if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
-                      OneSignal.notifyButton.launcher.waitUntilShown()
-                               .then(() => {
-                                 OneSignal.notifyButton.launcher.hide();
-                               });
-                    }
-                    OneSignal.once(Popover.EVENTS.SHOWN, () => {
-                      OneSignal.__isPopoverShowing = true;
-                    });
-                    OneSignal.once(Popover.EVENTS.CLOSED, () => {
-                      OneSignal.__isPopoverShowing = false;
-                      if (OneSignal.notifyButton) {
-                        OneSignal.notifyButton.launcher.show();
-                      }
-                    });
-                    OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
-                      OneSignal.popover.close();
-                      OneSignal.registerForPushNotifications({autoAccept: true});
-                    });
-                    OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
-                      log.debug("Setting flag to not show the popover to the user again.");
-                      Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
-                    });
+
+    if (Environment.isUnsupported()) {
+      log.debug('OneSignal: showHttpPrompt(): Exiting from unsupported environment.');
+      return;
+    }
+
+    function __showHttpPrompt() {
+      /*
+       Only show the HTTP popover if:
+       - Notifications aren't already enabled
+       - The user isn't manually opted out (if the user was manually opted out, we don't want to prompt the user)
+       */
+      if (OneSignal.__isPopoverShowing) {
+        log.debug('OneSignal: Not showing popover because it is currently being shown.');
+        return 'popover-already-shown';
+      }
+      return Promise.all([
+        OneSignal.getNotificationPermission(),
+        OneSignal.isPushNotificationsEnabled(),
+        OneSignal.getSubscription(),
+        Database.get('Options', 'popoverDoNotPrompt')
+      ])
+          .then(([permission, isEnabled, notOptedOut, doNotPrompt]) => {
+            if (doNotPrompt === true) {
+              log.debug('OneSignal: Not showing popover because the user previously clicked "No Thanks".');
+              return 'popover-previously-dismissed';
+            }
+            if (permission === 'denied') {
+              log.debug('OneSignal: Not showing popover because notification permissions are blocked.');
+              return 'notification-permission-blocked';
+            }
+            if (isEnabled) {
+              log.debug('OneSignal: Not showing popover because the current user is already subscribed.');
+              return 'user-already-subscribed';
+            }
+            if (!notOptedOut) {
+              log.debug('OneSignal: Not showing popover because the user was manually opted out.');
+              return 'user-intentionally-unsubscribed';
+            }
+            OneSignalHelpers.markHttpPopoverShown();
+            OneSignal.popover = new Popover(OneSignal.config.promptOptions);
+            OneSignal.popover.create();
+            log.debug('Showing the HTTP popover.');
+            if (OneSignal.notifyButton && OneSignal.notifyButton.launcher.state !== 'hidden') {
+              OneSignal.notifyButton.launcher.waitUntilShown()
+                  .then(() => {
+                    OneSignal.notifyButton.launcher.hide();
                   });
+            }
+            OneSignal.once(Popover.EVENTS.SHOWN, () => {
+              OneSignal.__isPopoverShowing = true;
+            });
+            OneSignal.once(Popover.EVENTS.CLOSED, () => {
+              OneSignal.__isPopoverShowing = false;
+              if (OneSignal.notifyButton) {
+                OneSignal.notifyButton.launcher.show();
+              }
+            });
+            OneSignal.once(Popover.EVENTS.ALLOW_CLICK, () => {
+              OneSignal.popover.close();
+              OneSignal.registerForPushNotifications({autoAccept: true});
+            });
+            OneSignal.once(Popover.EVENTS.CANCEL_CLICK, () => {
+              log.debug("Setting flag to not show the popover to the user again.");
+              Database.put('Options', {key: 'popoverDoNotPrompt', value: true});
+            });
+          });
+    }
+
+    if (!OneSignal.initialized) {
+      OneSignal.once(OneSignal.EVENTS.SDK_INITIALIZED, () => __showHttpPrompt());
+    } else {
+      return __showHttpPrompt();
+    }
   }
 
   static registerForPushNotifications(options) {
