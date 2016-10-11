@@ -5,3 +5,4 @@ bower_components/
 *.pem
 dist/
 build/
+test/integration-server/config.json

@@ -18,6 +18,7 @@
     "body-parser": "https://registry.npmjs.org/body-parser/-/body-parser-1.15.2.tgz",
     "bowser": "https://registry.npmjs.org/bowser/-/bowser-1.4.6.tgz",
     "chai": "https://registry.npmjs.org/chai/-/chai-3.5.0.tgz",
+    "config": "^1.21.0",
     "cors": "https://registry.npmjs.org/cors/-/cors-2.8.1.tgz",
     "css-loader": "https://registry.npmjs.org/css-loader/-/css-loader-0.25.0.tgz",
     "decamelize": "https://registry.npmjs.org/decamelize/-/decamelize-1.2.0.tgz",
@@ -103,8 +104,14 @@
     "@types/node": "^6.0.42",
     "awesome-typescript-loader": "^2.2.4",
     "chai": "https://registry.npmjs.org/chai/-/chai-3.5.0.tgz",
+    "hjson": "*",
+    "ignore-loader": "^0.1.1",
+    "jison": "^0.4.17",
     "mocha": "https://registry.npmjs.org/mocha/-/mocha-3.1.0.tgz",
+    "properties": "*",
+    "toml": "*",
     "typescript": "^2.1.0-dev.20161005",
-    "webpack": "https://registry.npmjs.org/webpack/-/webpack-1.13.2.tgz"
+    "webpack": "https://registry.npmjs.org/webpack/-/webpack-1.13.2.tgz",
+    "x2js": "*"
   }
 }

@@ -1,4 +1,4 @@
-import { Uuid, InvalidUuidError } from "../src/models/Uuid";
+import { Uuid, InvalidUuidError } from "../../src/models/Uuid";
 import { expect } from 'chai';
 
 

@@ -97,13 +97,13 @@ const ONESIGNAL_WEB_SDK = {
   ]
 };
 
-const ONESIGNAL_WEB_SDK_TESTS = {
+const ONESIGNAL_WEB_SDK_UNIT_TESTS = {
   name: 'OneSignalSDKTests',
   target: 'node',
-  entry: ['./test/entry.ts'],
+  entry: ['./test/unit/entry.ts'],
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: 'OneSignalSDKTests.js'
+    filename: 'unit-tests.js'
   },
   devtool: 'source-map',
   resolve: {
@@ -115,7 +115,7 @@ const ONESIGNAL_WEB_SDK_TESTS = {
       loader: 'awesome-typescript-loader',
       include: [
           path.resolve(__dirname, "./src"),
-          path.resolve(__dirname, "./test"),
+          path.resolve(__dirname, "./test/unit"),
       ],
       exclude: /(node_modules|bower_components|test\/server)/
     }, {
@@ -132,44 +132,84 @@ const ONESIGNAL_WEB_SDK_TESTS = {
   ]
 };
 
-// const ONESIGNAL_WEB_SDK_TEST_SERVER = {
-//   name: 'OneSignalSDKTestServer',
-//   target: 'node',
-//   entry: ['babel-polyfill', './test/server.js'],
-//   output: {
-//     path: path.join(__dirname, 'dist'),
-//     filename: 'OneSignalSDKTestServer.js'
-//   },
-//   devtool: 'source-map',
-//   module: {
-//     loaders: [{
-//       test: /\.js$/,
-//       include: [path.resolve(__dirname, "./test/server")],
-//       exclude: /(node_modules|bower_components)/,
-//       loader: 'babel-loader',
-//       query: {
-//         presets: ['es2015', 'stage-0'],
-//         plugins: ['transform-runtime'],
-//         cacheDirectory: true
-//       }
-//     },
-//       {
-//         test: /\.json$/,
-//         loader: "json-loader"
-//       }]
-//   },
-//   debug: !IS_PROD,
-//   plugins: [
-//     new webpack.optimize.DedupePlugin(),
-//     new webpack.DefinePlugin(definePluginConstants),
-//     recompileFunction
-//   ]
-// };
+const ONESIGNAL_WEB_SDK_INTEGRATION_TESTS = {
+    name: 'OneSignalSDKTests',
+    target: 'node',
+    entry: ['./test/integration/entry.ts'],
+    output: {
+        path: path.join(__dirname, 'dist'),
+        filename: 'integration-tests.js'
+    },
+    devtool: 'source-map',
+    resolve: {
+        extensions: ["", ".ts", ".tsx", ".js"]
+    },
+    module: {
+        loaders: [{
+            test: /\.(t|j)sx?$/,
+            loader: 'awesome-typescript-loader',
+            include: [
+                path.resolve(__dirname, "./src"),
+                path.resolve(__dirname, "./test/integration"),
+            ],
+            exclude: /(node_modules|bower_components|test\/server)/
+        }, {
+            test: /(\.html$)|(LICENSE)/,
+            loader: 'ignore-loader'
+        }]
+    },
+    debug: true,
+    plugins: [
+        new webpack.optimize.OccurrenceOrderPlugin(),
+        new webpack.optimize.DedupePlugin(),
+        new webpack.DefinePlugin(definePluginConstants),
+        recompileFunction
+    ]
+};
+
+const ONESIGNAL_WEB_SDK_INTEGRATION_TEST_SERVER = {
+    name: 'OneSignalSDKTestServer',
+    target: 'node',
+    entry: './test/integration-server/entry.ts',
+    output: {
+        path: path.join(__dirname, 'dist'),
+        filename: 'integration-test-server.js'
+    },
+    devtool: 'source-map',
+    resolve: {
+        extensions: ["", ".ts", ".tsx", ".js"]
+    },
+    module: {
+        loaders: [{
+            test: /\.(t|j)sx?$/,
+            loader: 'awesome-typescript-loader',
+            include: [
+                path.resolve(__dirname, "./src"),
+                path.resolve(__dirname, "./test/integration-server"),
+            ]
+        }, {
+            test: /(\.html$)|(LICENSE)|(coffee)|(\.woff)|(\.css)|(\.md)/,
+            loader: 'ignore-loader'
+        },
+        {
+            test: /\.json$/,
+            loader: "json-loader"
+        }]
+    },
+    debug: !IS_PROD,
+    plugins: [
+        new webpack.optimize.DedupePlugin(),
+        new webpack.DefinePlugin(definePluginConstants),
+        recompileFunction
+    ]
+};
 
 var exports = [ONESIGNAL_WEB_SDK];
 
 if (IS_TEST) {
-  exports.push(ONESIGNAL_WEB_SDK_TESTS);
+  exports.push(ONESIGNAL_WEB_SDK_UNIT_TESTS);
+  //exports.push(ONESIGNAL_WEB_SDK_INTEGRATION_TESTS);
+  exports.push(ONESIGNAL_WEB_SDK_INTEGRATION_TEST_SERVER);
 }
 
 module.exports = exports;
