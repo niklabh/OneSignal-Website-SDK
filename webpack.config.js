@@ -1,7 +1,5 @@
 var webpack = require("webpack");
 var path = require('path');
-var babelPolyfill = require('babel-polyfill');
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 var IS_PROD = process.argv.indexOf('--production') >= 0;
 var IS_TEST = process.argv.indexOf('--test') >= 0;

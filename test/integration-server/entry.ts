@@ -5,9 +5,11 @@ import bodyParser from 'body-parser';
 import { masterDatabase, shardDatabase, getDatabaseForUuid } from './Database';
 import morgan from 'morgan';
 import fs from 'fs';
-import config from 'config';
+import nconf from 'nconfg';
 
-console.log('config:', config);
+nconf.argv()
+     .env()
+     .file({ file: 'test/integration-server/config.json' });
 
 var options = {
     key: fs.readFileSync('test/integration-server/key.pem'),
