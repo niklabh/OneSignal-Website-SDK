@@ -1,5 +1,6 @@
 /// <reference path="globals/loglevel/index.d.ts" />
 /// <reference path="globals/mocha/index.d.ts" />
+/// <reference path="globals/nconf/index.d.ts" />
 /// <reference path="globals/onesignal.d.ts" />
 /// <reference path="globals/serviceworker.d.ts" />
 /// <reference path="globals/validator/index.d.ts" />

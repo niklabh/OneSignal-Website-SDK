@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import { masterDatabase, shardDatabase, getDatabaseForUuid } from './Database';
 import morgan from 'morgan';
 import fs from 'fs';
-import nconf from 'nconfg';
+import nconf from 'nconf';
 
 nconf.argv()
      .env()

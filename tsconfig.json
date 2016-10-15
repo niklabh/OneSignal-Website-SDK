@@ -19,18 +19,14 @@
     "allowUnusedLabels": true,
     "skipLibCheck": false,
     "skipDefaultLibCheck": false,
-    "outDir": "dist",
+    "outDir": "build",
     "awesomeTypescriptLoaderOptions": {
       "useCache": false
     }
   },
   "include": [
     "src/**/*",
-    "test/**/*"
-  ],
-  "files": [
-    "typings/index.d.ts",
-    "src/entry.ts",
-    "test/integration-server/entry.ts"
+    "test/**/*",
+    "typings/**/*"
   ]
 }
